@@ -12,8 +12,38 @@ function show(which){view=which;['chat','dm','call','friends'].forEach(x=>$(x+'V
 
 const saved=JSON.parse(localStorage.getItem('d2-v6-accounts')||'[]');
 function savedAccounts(){$('savedAccounts').innerHTML=saved.length?'Contas salvas: '+saved.map(n=>`<button data-a="${esc(n)}">${esc(n)}</button>`).join(''):'';$('savedAccounts').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{$('name').value=b.dataset.a;$('join').click()})} savedAccounts();
-$('join').onclick=()=>{username=$('name').value.trim();if(!username)return alert('Digite seu nome.');if(!saved.includes(username)){saved.push(username);localStorage.setItem('d2-v6-accounts',JSON.stringify(saved))}socket.emit('register',{username,profile});$('login').classList.add('hidden');$('app').classList.remove('hidden');$('myName').textContent=username;setAvatar($('myAvatar'),profile,username)};
-$('name').onkeydown=e=>{if(e.key==='Enter')$('join').click()};
+
+const loginStatus=$('loginStatus');
+function setLoginStatus(text,type){
+  if(!loginStatus)return;
+  loginStatus.textContent=text||'';
+  loginStatus.classList.remove('ok','err');
+  if(type)loginStatus.classList.add(type);
+}
+socket.on('connect',()=>setLoginStatus('Servidor conectado. Pode entrar.','ok'));
+socket.on('connect_error',()=>setLoginStatus('Não foi possível conectar ao servidor. Atualize a página.','err'));
+socket.on('disconnect',()=>setLoginStatus('Conexão perdida. Tentando reconectar...','err'));
+
+function doLogin(){
+  username=String($('name').value||'').trim();
+  if(!username){setLoginStatus('Digite um nome de usuário.','err');$('name').focus();return}
+  try{
+    if(saved.indexOf(username)<0){
+      saved.push(username);
+      localStorage.setItem('d2-v6-accounts',JSON.stringify(saved));
+    }
+  }catch(e){console.warn('localStorage',e)}
+  setLoginStatus('Entrando...','');
+  socket.emit('register',{username:username,profile:profile});
+  $('login').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('myName').textContent=username;
+  setAvatar($('myAvatar'),profile,username);
+}
+$('join').addEventListener('click',doLogin);
+$('join').addEventListener('touchend',function(e){e.preventDefault();doLogin()},{passive:false});
+
+$('name').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();doLogin()}};
 
 socket.on('bootstrap',d=>{servers=d.servers||[];server=d.server;friends=d.friends||[];for(const [ch,list] of Object.entries(d.history||{}))messages.set(ch,list);currentChannel=server.textChannels[0]?.id||'geral';renderAll();selectChannel(currentChannel)});
 socket.on('servers-updated',s=>{servers=s;renderServers()});socket.on('server-created',s=>{if(!servers.some(x=>x.id===s.id))servers.push(s);renderServers();switchServer(s.id)});

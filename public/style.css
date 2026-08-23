@@ -43,3 +43,14 @@
   .attachment{max-width:100%;height:auto}
   .modal-card{max-height:90dvh;overflow:auto}
 }
+
+.login-status{min-height:20px;margin-top:10px;font-size:12px;text-align:center;color:#b5bac1}
+.login-status.ok{color:#23a559}
+.login-status.err{color:#fa777c}
+#join:disabled{opacity:.6;cursor:not-allowed}
+@media(max-width:520px){
+  .login-screen{min-height:100dvh;padding:16px}
+  .login-card{width:100%;max-width:430px;padding:24px 18px}
+  .login-card input{font-size:16px}
+  #join{min-height:48px;font-size:16px;touch-action:manipulation}
+}
